@@ -1781,6 +1781,32 @@ namespace UnityEngine.Rendering.Universal
 
                                 break;
                             }
+
+                            case ImageUpscalingFilter.SGSR:
+                            {
+                                m_Materials.sgsr.shaderKeywords = null;
+
+                                var upscaleRtDesc = cameraData.cameraTargetDescriptor;
+                                upscaleRtDesc.msaaSamples = 1;
+                                upscaleRtDesc.depthStencilFormat = GraphicsFormat.None;
+                                upscaleRtDesc.width = cameraData.pixelWidth;
+                                upscaleRtDesc.height = cameraData.pixelHeight;
+                                RenderingUtils.ReAllocateHandleIfNeeded(ref m_UpscaledTarget, upscaleRtDesc, FilterMode.Point, TextureWrapMode.Clamp, name: "_UpscaledTexture");
+
+                                var sgsrInputSize = new Vector2(cameraData.cameraTargetDescriptor.width, cameraData.cameraTargetDescriptor.height);
+                                //var sgsrOutputSize = new Vector2(cameraData.pixelWidth, cameraData.pixelHeight);
+
+                                Vector4 viewportInfo = new Vector4(1f / sgsrInputSize.x, 1f / sgsrInputSize.y, sgsrInputSize.x, sgsrInputSize.y);
+                                SGSRUtils.SetConstants(cmd, viewportInfo, cameraData.sgsrEdgeSharpness, cameraData.sgsrScaleFactor);
+
+                                Blitter.BlitCameraTexture(cmd, sourceTex, m_UpscaledTarget, colorLoadAction, RenderBufferStoreAction.Store, m_Materials.sgsr, 0);
+
+                                // Update the source texture for the next operation
+                                sourceTex = m_UpscaledTarget;
+                                PostProcessUtils.SetSourceSize(cmd, m_UpscaledTarget);
+
+                                break;
+                            }
                         }
 
                         break;
@@ -1851,6 +1877,7 @@ namespace UnityEngine.Rendering.Universal
             public readonly Material temporalAntialiasing;
             public readonly Material scalingSetup;
             public readonly Material easu;
+            public readonly Material sgsr;
             public readonly Material uber;
             public readonly Material finalPass;
             public readonly Material lensFlareDataDriven;
@@ -1874,6 +1901,7 @@ namespace UnityEngine.Rendering.Universal
                 temporalAntialiasing = Load(data.shaders.temporalAntialiasingPS);
                 scalingSetup = Load(data.shaders.scalingSetupPS);
                 easu = Load(data.shaders.easuPS);
+                sgsr = Load(data.shaders.sgsrPS);
                 uber = Load(data.shaders.uberPostPS);
                 finalPass = Load(data.shaders.finalPostPassPS);
                 lensFlareDataDriven = Load(data.shaders.LensFlareDataDrivenPS);
@@ -1913,6 +1941,7 @@ namespace UnityEngine.Rendering.Universal
                 CoreUtils.Destroy(temporalAntialiasing);
                 CoreUtils.Destroy(scalingSetup);
                 CoreUtils.Destroy(easu);
+                CoreUtils.Destroy(sgsr);
                 CoreUtils.Destroy(uber);
                 CoreUtils.Destroy(finalPass);
                 CoreUtils.Destroy(lensFlareDataDriven);

@@ -210,6 +210,19 @@ namespace UnityEditor.Rendering.Universal
                     EditorGUILayout.HelpBox(Styles.stpMobilePlatformWarning, MessageType.Warning, true);
                 }
             }
+            else if (serialized.asset.upscalingFilter == UpscalingFilterSelection.SGSR)
+            {
+                // TODO: SGSR일 때 scale 0.5로 고정 및 2, 3배 옵션 별도 추가
+                ++EditorGUI.indentLevel;
+
+                // TODO: EdgeDirection 여부에 따라서 define 추가/제거 수행
+                EditorGUILayout.PropertyField(serialized.sgsrUseEdgeDirection, Styles.sgsrUseEdgeDirectionText);
+
+                serialized.sgsrEdgeSharpness.floatValue = EditorGUILayout.Slider(Styles.sgsrEdgeSharpnessText, serialized.sgsrEdgeSharpness.floatValue, 1.0f, 2.0f);
+                serialized.sgsrScaleFactor.floatValue = EditorGUILayout.Slider(Styles.sgsrScaleFactorText, serialized.sgsrScaleFactor.floatValue, 0.0f, 1.0f);
+
+                --EditorGUI.indentLevel;
+            }
             EditorGUILayout.PropertyField(serialized.enableLODCrossFadeProp, Styles.enableLODCrossFadeText);
             EditorGUI.BeginDisabledGroup(!serialized.enableLODCrossFadeProp.boolValue);
             EditorGUILayout.PropertyField(serialized.lodCrossFadeDitheringTypeProp, Styles.lodCrossFadeDitheringTypeText);

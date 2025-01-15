@@ -206,6 +206,8 @@ namespace UnityEngine.Rendering.Universal
         internal bool fsrOverrideSharpness;
         internal float fsrSharpness;
         internal HDRColorBufferPrecision hdrColorBufferPrecision;
+        internal float sgsrEdgeSharpness;
+        internal float sgsrScaleFactor;
 
         /// <summary>
         /// True if this camera should clear depth buffer. This setting only applies to cameras of type <c>CameraRenderType.Overlay</c>

@@ -367,7 +367,13 @@ namespace UnityEngine.Rendering.Universal
         /// Unity uses the Spatial-Temporal Post-Processing technique to perform upscaling.
         /// </summary>
         [InspectorName("Spatial-Temporal Post-Processing"), Tooltip("If the target device does not support compute shaders or is running GLES, Unity falls back to the Automatic option.")]
-        STP
+        STP,
+
+        /// <summary>
+        /// Unity uses the Snapdragon Game Super Resolution 1.0 technique to perform upscaling.
+        /// </summary>
+        [InspectorName("Snapdragon Game Super Resolution V1")]
+        SGSR
     }
 
     /// <summary>
@@ -475,6 +481,9 @@ namespace UnityEngine.Rendering.Universal
         [SerializeField] UpscalingFilterSelection m_UpscalingFilter = UpscalingFilterSelection.Auto;
         [SerializeField] bool m_FsrOverrideSharpness = false;
         [SerializeField] float m_FsrSharpness = FSRUtils.kDefaultSharpnessLinear;
+        [SerializeField] bool m_SgsrUseEdgeDirection = false;
+        [SerializeField] float m_SgsrEdgeSharpness = 2.0f;
+        [SerializeField] float m_SgsrScaleFactor = 0.01f;
 
 #if UNITY_EDITOR // multi_compile _ LOD_FADE_CROSSFADE
         [ShaderKeywordFilter.RemoveIf(false, keywordNames: ShaderKeywordStrings.LOD_FADE_CROSSFADE)]
@@ -1131,6 +1140,24 @@ namespace UnityEngine.Rendering.Universal
         {
             get => m_FsrSharpness;
             set => m_FsrSharpness = value;
+        }
+
+        public bool sgsrUseEdgeDirection
+        {
+            get { return m_SgsrUseEdgeDirection; }
+            set { m_SgsrUseEdgeDirection = value; }
+        }
+
+        public float sgsrEdgeSharpness
+        {
+            get { return m_SgsrEdgeSharpness; }
+            set { m_SgsrEdgeSharpness = value; }
+        }
+
+        public float sgsrScaleFactor
+        {
+            get { return m_SgsrScaleFactor; }
+            set { m_SgsrScaleFactor = value; }
         }
 
         /// <summary>

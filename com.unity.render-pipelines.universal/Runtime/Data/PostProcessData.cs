@@ -142,6 +142,12 @@ namespace UnityEngine.Rendering.Universal
             /// </summary>
             [Reload("Shaders/PostProcessing/FinalPost.shader")]
             public Shader finalPostPassPS;
+
+            /// <summary>
+            /// The Snapdragon Game Super Resolution shader.
+            /// </summary>
+            [Reload("Shaders/PostProcessing/SnapdragonGameSuperResolution.shader")]
+            public Shader sgsrPS;
         }
 
         /// <summary>

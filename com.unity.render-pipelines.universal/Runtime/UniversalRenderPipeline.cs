@@ -1445,6 +1445,9 @@ namespace UnityEngine.Rendering.Universal
             cameraData.fsrOverrideSharpness = settings.fsrOverrideSharpness;
             cameraData.fsrSharpness = settings.fsrSharpness;
 
+            cameraData.sgsrEdgeSharpness = settings.sgsrEdgeSharpness;
+            cameraData.sgsrScaleFactor = settings.sgsrScaleFactor;
+
             cameraData.xr = XRSystem.emptyPass;
             XRSystem.SetRenderScale(cameraData.renderScale);
 
@@ -2136,6 +2139,13 @@ namespace UnityEngine.Rendering.Universal
                 case UpscalingFilterSelection.STP:
                 {
                     filter = ImageUpscalingFilter.STP;
+
+                    break;
+                }
+
+                case UpscalingFilterSelection.SGSR:
+                {
+                    filter = ImageUpscalingFilter.SGSR;
 
                     break;
                 }

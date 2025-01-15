@@ -238,7 +238,8 @@ namespace UnityEditor.Rendering.Universal
                 {
                     // FSR overrides TAA CAS settings. Disable this setting when FSR is enabled.
                     bool disableSharpnessControl = UniversalRenderPipeline.asset != null ?
-                        (UniversalRenderPipeline.asset.upscalingFilter == UpscalingFilterSelection.FSR) : false;
+                        (UniversalRenderPipeline.asset.upscalingFilter == UpscalingFilterSelection.FSR
+                        || UniversalRenderPipeline.asset.upscalingFilter == UpscalingFilterSelection.SGSR) : false;
                     using var disable = new EditorGUI.DisabledScope(disableSharpnessControl);
 
                     EditorGUILayout.Slider(p.taaContrastAdaptiveSharpening, 0.0f, 1.0f, Styles.taaContrastAdaptiveSharpening);

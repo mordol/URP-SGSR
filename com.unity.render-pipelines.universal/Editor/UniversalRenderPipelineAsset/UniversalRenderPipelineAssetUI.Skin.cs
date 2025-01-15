@@ -46,6 +46,9 @@ namespace UnityEditor.Rendering.Universal
             public static GUIContent shEvalModeText = EditorGUIUtility.TrTextContent("SH Evaluation Mode", "Defines the Spherical Harmonic (SH) lighting evaluation type (per vertex, per pixel, or mixed).");
             public static readonly string stpRequiresRenderGraph = "STP is selected but Render Graph is not enabled. STP requires Render Graph in order to function. Unity will fall back to the Automatic option.";
             public static readonly string stpMobilePlatformWarning = "STP is selected for use on a mobile platform. STP is only supported on modern compute-capable hardware and its performance overhead may make it impractical on lower-end devices.";
+            public static GUIContent sgsrScaleFactorText = EditorGUIUtility.TrTextContent("SGSR Scale Factor", "Controls the scale factor used by Snapdragon Game Super Resolution.");
+            public static GUIContent sgsrUseEdgeDirectionText = EditorGUIUtility.TrTextContent("SGSR Use Edge Direction", "Controls whether SGSR Use Edge Direction enabled or disabled.");
+            public static GUIContent sgsrEdgeSharpnessText = EditorGUIUtility.TrTextContent("SGSR Edge Sharpness", "Controls the intensity of the sharpening filter used by Snapdragon Game Super Resolution.");
 
             // Main light
             public static GUIContent mainLightRenderingModeText = EditorGUIUtility.TrTextContent("Main Light", "Main light is the brightest directional light.");

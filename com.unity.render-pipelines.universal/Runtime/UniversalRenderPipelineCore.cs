@@ -76,7 +76,10 @@ namespace UnityEngine.Rendering.Universal
         FSR,
 
         /// Spatial-Temporal Post-Processing
-        STP
+        STP,
+
+        /// Snapdragon Game Super Resolution
+        SGSR
     }
 
     /// <summary>
@@ -358,6 +361,8 @@ namespace UnityEngine.Rendering.Universal
         internal ref bool fsrOverrideSharpness => ref frameData.Get<UniversalCameraData>().fsrOverrideSharpness;
         internal ref float fsrSharpness => ref frameData.Get<UniversalCameraData>().fsrSharpness;
         internal ref HDRColorBufferPrecision hdrColorBufferPrecision => ref frameData.Get<UniversalCameraData>().hdrColorBufferPrecision;
+        internal ref float sgsrEdgeSharpness => ref frameData.Get<UniversalCameraData>().sgsrEdgeSharpness;
+        internal ref float sgsrScaleFactor => ref frameData.Get<UniversalCameraData>().sgsrScaleFactor;
 
         /// <summary>
         /// True if this camera should clear depth buffer. This setting only applies to cameras of type <c>CameraRenderType.Overlay</c>
