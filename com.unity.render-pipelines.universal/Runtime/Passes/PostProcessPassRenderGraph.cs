@@ -1491,6 +1491,46 @@ namespace UnityEngine.Rendering.Universal
             }
         }
 
+        public void RenderFinalSGSRScale(RenderGraph renderGraph, in TextureHandle source, in TextureHandle destination, bool enableAlphaOutput)
+        {
+            // SGSR upscale
+            m_Materials.easu.shaderKeywords = null;
+
+            using (var builder = renderGraph.AddRasterRenderPass<PostProcessingFinalFSRScalePassData>("Postprocessing Final SGSR Scale Pass", out var passData, ProfilingSampler.Get(URPProfileId.RG_FinalSGSRScale)))
+            {
+                builder.AllowGlobalStateModification(true);
+                passData.destinationTexture = destination;
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
+                passData.sourceTexture = source;
+                builder.UseTexture(source, AccessFlags.Read);
+                passData.material = m_Materials.sgsr;
+                passData.enableAlphaOutput = enableAlphaOutput;
+
+                builder.SetRenderFunc(static (PostProcessingFinalFSRScalePassData data, RasterGraphContext context) =>
+                {
+                    var cmd = context.cmd;
+                    var sourceTex = data.sourceTexture;
+                    var destTex = data.destinationTexture;
+                    var material = data.material;
+                    var enableAlphaOutput = data.enableAlphaOutput;
+                    RTHandle sourceHdl = (RTHandle)sourceTex;
+                    RTHandle destHdl = (RTHandle)destTex;
+
+                    var sgsrInputSize = new Vector2(sourceHdl.referenceSize.x, sourceHdl.referenceSize.y);
+                    //var sgsrOutputSize = new Vector2(destHdl.referenceSize.x, destHdl.referenceSize.y);
+                    //FSRUtils.SetEasuConstants(cmd, fsrInputSize, fsrInputSize, fsrOutputSize);
+                    Vector4 viewportInfo = new Vector4(1f / sgsrInputSize.x, 1f / sgsrInputSize.y, sgsrInputSize.x, sgsrInputSize.y);
+                    SGSRUtils.SetViewportInfo(cmd, viewportInfo);
+
+                    CoreUtils.SetKeyword(material, ShaderKeywordStrings._ENABLE_ALPHA_OUTPUT, enableAlphaOutput);
+
+                    Vector2 viewportScale = sourceHdl.useScaling ? new Vector2(sourceHdl.rtHandleProperties.rtHandleScale.x, sourceHdl.rtHandleProperties.rtHandleScale.y) : Vector2.one;
+                    Blitter.BlitTexture(cmd, sourceHdl, viewportScale, material, 0);
+                });
+                return;
+            }
+        }
+
         private class PostProcessingFinalBlitPassData
         {
             internal TextureHandle destinationTexture;
@@ -1509,6 +1549,8 @@ namespace UnityEngine.Rendering.Universal
             public bool isFxaaEnabled;
             /// <summary>Is FSR Enabled.</summary>
             public bool isFsrEnabled;
+            /// <summary>Is SGSR Enabled.</summary>
+            public bool isSgsrEnabled;
             /// <summary>Is TAA sharpening enabled.</summary>
             public bool isTaaSharpeningEnabled;
             /// <summary>True if final blit requires HDR output.</summary>
@@ -1530,6 +1572,7 @@ namespace UnityEngine.Rendering.Universal
                 FinalBlitSettings s = new FinalBlitSettings();
                 s.isFxaaEnabled = false;
                 s.isFsrEnabled = false;
+                s.isSgsrEnabled = false;
                 s.isTaaSharpeningEnabled = false;
                 s.requireHDROutput = false;
                 s.resolveToDebugScreen = false;
@@ -1572,6 +1615,7 @@ namespace UnityEngine.Rendering.Universal
                     var material = data.material;
                     var isFxaaEnabled = data.settings.isFxaaEnabled;
                     var isFsrEnabled = data.settings.isFsrEnabled;
+                    var isSgsrEnabled = data.settings.isSgsrEnabled;
                     var isRcasEnabled = data.settings.isTaaSharpeningEnabled;
                     var requireHDROutput = data.settings.requireHDROutput;
                     var resolveToDebugScreen = data.settings.resolveToDebugScreen;
@@ -1604,6 +1648,10 @@ namespace UnityEngine.Rendering.Universal
                         // If FSR is enabled then it overrides the sharpening/TAA setting and we skip it.
                         material.EnableKeyword(ShaderKeywordStrings.Rcas);
                         FSRUtils.SetRcasConstantsLinear(cmd, data.cameraData.taaSettings.contrastAdaptiveSharpening);
+                    }
+                    else if (isSgsrEnabled)
+                    {
+                        SGSRUtils.SetConstants(cmd, data.cameraData.sgsrEdgeSharpness, data.cameraData.sgsrScaleFactor);
                     }
 
                     if (isAlphaOutputEnabled)
@@ -1700,12 +1748,13 @@ namespace UnityEngine.Rendering.Universal
             settings.isAlphaOutputEnabled = cameraData.isAlphaOutputEnabled;
             settings.isFxaaEnabled = (cameraData.antialiasing == AntialiasingMode.FastApproximateAntialiasing);
             settings.isFsrEnabled = ((cameraData.imageScalingMode == ImageScalingMode.Upscaling) && (cameraData.upscalingFilter == ImageUpscalingFilter.FSR));
+            settings.isSgsrEnabled = ((cameraData.imageScalingMode == ImageScalingMode.Upscaling) && (cameraData.upscalingFilter == ImageUpscalingFilter.SGSR));
 
             // Reuse RCAS pass as an optional standalone post sharpening pass for TAA.
             // This avoids the cost of EASU and is available for other upscaling options.
             // If FSR is enabled then FSR settings override the TAA settings and we perform RCAS only once.
             // If STP is enabled, then TAA sharpening has already been performed inside STP.
-            settings.isTaaSharpeningEnabled = (cameraData.IsTemporalAAEnabled() && cameraData.taaSettings.contrastAdaptiveSharpening > 0.0f) && !settings.isFsrEnabled && !cameraData.IsSTPEnabled();
+            settings.isTaaSharpeningEnabled = (cameraData.IsTemporalAAEnabled() && cameraData.taaSettings.contrastAdaptiveSharpening > 0.0f) && !settings.isFsrEnabled && !cameraData.IsSTPEnabled() && !settings.isSgsrEnabled;
 
             var tempRtDesc = cameraData.cameraTargetDescriptor;
             tempRtDesc.msaaSamples = 1;
@@ -1768,6 +1817,12 @@ namespace UnityEngine.Rendering.Universal
                             case ImageUpscalingFilter.FSR:
                             {
                                 RenderFinalFSRScale(renderGraph, in currentSource, in upScaleTarget, settings.isAlphaOutputEnabled);
+                                currentSource = upScaleTarget;
+                                break;
+                            }
+                            case ImageUpscalingFilter.SGSR:
+                            {
+                                RenderFinalSGSRScale(renderGraph, in currentSource, in upScaleTarget, settings.isAlphaOutputEnabled);
                                 currentSource = upScaleTarget;
                                 break;
                             }
@@ -1975,6 +2030,7 @@ namespace UnityEngine.Rendering.Universal
             bool useMotionBlur = m_MotionBlur.IsActive() && !isSceneViewCamera;
             bool usePaniniProjection = m_PaniniProjection.IsActive() && !isSceneViewCamera;
             bool isFsrEnabled = ((cameraData.imageScalingMode == ImageScalingMode.Upscaling) && (cameraData.upscalingFilter == ImageUpscalingFilter.FSR));
+            bool isSgsrEnabled = ((cameraData.imageScalingMode == ImageScalingMode.Upscaling) && (cameraData.upscalingFilter == ImageUpscalingFilter.SGSR));
 
             // Disable MotionBlur in EditMode, so that editing remains clear and readable.
             // NOTE: HDRP does the same via CoreUtils::AreAnimatedMaterialsEnabled().

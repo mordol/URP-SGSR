@@ -1922,6 +1922,7 @@ namespace UnityEngine.Rendering.Universal
         [HideInDebugUI] RG_UberPost,
         [HideInDebugUI] RG_FinalSetup,
         [HideInDebugUI] RG_FinalFSRScale,
+        [HideInDebugUI] RG_FinalSGSRScale,
         [HideInDebugUI] RG_FinalBlit,
 
         BlitFinalToBackBuffer,

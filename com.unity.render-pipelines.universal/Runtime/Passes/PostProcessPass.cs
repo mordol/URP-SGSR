@@ -1661,11 +1661,12 @@ namespace UnityEngine.Rendering.Universal
 
             // FSR is only considered "enabled" when we're performing upscaling. (downscaling uses a linear filter unconditionally)
             bool isFsrEnabled = ((cameraData.imageScalingMode == ImageScalingMode.Upscaling) && (cameraData.upscalingFilter == ImageUpscalingFilter.FSR));
+            bool isSgsrEnabled = ((cameraData.imageScalingMode == ImageScalingMode.Upscaling) && (cameraData.upscalingFilter == ImageUpscalingFilter.SGSR));
 
             // Reuse RCAS pass as an optional standalone post sharpening pass for TAA.
             // This avoids the cost of EASU and is available for other upscaling options.
             // If FSR is enabled then FSR settings override the TAA settings and we perform RCAS only once.
-            bool isTaaSharpeningEnabled = (cameraData.IsTemporalAAEnabled() && cameraData.taaSettings.contrastAdaptiveSharpening > 0.0f) && !isFsrEnabled;
+            bool isTaaSharpeningEnabled = (cameraData.IsTemporalAAEnabled() && cameraData.taaSettings.contrastAdaptiveSharpening > 0.0f) && !isFsrEnabled && !isSgsrEnabled;
 
             // If target format has alpha and post-process needs to process/output alpha.
             bool isAlphaOutputEnabled = cameraData.isAlphaOutputEnabled;
@@ -1797,7 +1798,8 @@ namespace UnityEngine.Rendering.Universal
                                 //var sgsrOutputSize = new Vector2(cameraData.pixelWidth, cameraData.pixelHeight);
 
                                 Vector4 viewportInfo = new Vector4(1f / sgsrInputSize.x, 1f / sgsrInputSize.y, sgsrInputSize.x, sgsrInputSize.y);
-                                SGSRUtils.SetConstants(cmd, viewportInfo, cameraData.sgsrEdgeSharpness, cameraData.sgsrScaleFactor);
+                                SGSRUtils.SetViewportInfo(cmd, viewportInfo);
+                                SGSRUtils.SetConstants(cmd, cameraData.sgsrEdgeSharpness, cameraData.sgsrScaleFactor);
 
                                 Blitter.BlitCameraTexture(cmd, sourceTex, m_UpscaledTarget, colorLoadAction, RenderBufferStoreAction.Store, m_Materials.sgsr, 0);
 
